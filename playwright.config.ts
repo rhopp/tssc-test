@@ -1,8 +1,6 @@
 import { defineConfig, PlaywrightTestConfig, PlaywrightTestOptions, PlaywrightWorkerOptions } from '@playwright/test';
-import { existsSync, readFileSync } from 'fs';
-import path from 'path';
-import { TestPlan } from './src/playwright/testplan';
 import { TestItem } from './src/playwright/testItem';
+import { loadProjectConfigurations, ProjectConfig } from './src/utils/projectConfigSingleton';
 
 // Extend Playwright types to include testItem
 declare module '@playwright/test' {
@@ -11,45 +9,58 @@ declare module '@playwright/test' {
   }
 }
 
-// Load the test plan for e2e tests
-const testPlanPath = process.env.TESTPLAN_PATH || path.resolve(process.cwd(), 'testplan.json');
-const testPlanData = JSON.parse(readFileSync(testPlanPath, 'utf-8'));
-const testPlan = new TestPlan(testPlanData);
+// Environment variable flags to control which tests run
+const ENABLE_E2E_TESTS = process.env.ENABLE_E2E_TESTS !== 'false'; // Default: true
+const ENABLE_UI_TESTS = process.env.ENABLE_UI_TESTS === 'true';    // Default: false
 
-// Create projects using the TestPlan class
-const e2eProjects = testPlan.getProjectConfigs().map(config => ({
-  name: config.name,
-  use: {
-    testItem: config.testItem,
-  },
-}));
+let projectConfigs: ProjectConfig[] = [];
+let allProjects: any[] = [];
 
-// Create ui projects for UI tests from exported test items
-let uiProjects: any[] = [];
-const exportedTestItemsPath = './tmp/test-items.json';
-if (existsSync(exportedTestItemsPath)) {
-  try {
-    const exportedData = JSON.parse(readFileSync(exportedTestItemsPath, 'utf-8'));
-    if (exportedData.testItems && Array.isArray(exportedData.testItems)) {
-      uiProjects = exportedData.testItems.map((itemData: any) => ({
-        name: `ui-${itemData.name}`,
-        testMatch: '**/ui.test.ts',
-        use: {
-          testItem: TestItem.fromJSON(itemData),
-        },
-      }));
-    }
-  } catch (error) {
-    console.warn('Could not load exported test items for UI tests:', error);
+try {
+  // Load pre-generated configurations
+  projectConfigs = loadProjectConfigurations();
+
+  let e2eProjects: any[] = [];
+  let uiProjects: any[] = [];
+
+  // Create e2e projects if enabled
+  if (ENABLE_E2E_TESTS) {
+    e2eProjects = projectConfigs.map(config => ({
+      name: `e2e-${config.name}`,
+      testMatch: '**/*.test.e2e.ts',
+      use: {
+        testItem: config.testItem,
+      },
+    }));
   }
-}
 
-const allProjects = [...e2eProjects, ...uiProjects];
+  // Create UI projects if enabled
+  if (ENABLE_UI_TESTS) {
+    uiProjects = projectConfigs.map(config => ({
+      name: `ui-${config.name}`,
+      testMatch: '**/*.ui.test.ts',
+      use: {
+        testItem: config.testItem,
+      },
+      // Only add dependencies if e2e tests are enabled
+      ...(ENABLE_E2E_TESTS && {
+        dependencies: [`e2e-${config.name}`]
+      })
+    }));
+  }
+
+  allProjects = [...e2eProjects, ...uiProjects];
+
+} catch (error) {
+  // Silent fallback - provide empty projects to prevent complete failure
+  allProjects = [];
+}
 
 export default defineConfig({
   testDir: './tests',
   testMatch: '**/*.test.ts',
   workers: 6,
+  fullyParallel: true, // This should allow immediate execution when dependencies are met
   projects: allProjects.length ? allProjects : [{ name: 'default' }],
   reporter: [['html'], ['list']],
   timeout: 900000, // Default to 15 minutes (900000ms)

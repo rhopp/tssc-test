@@ -8,11 +8,14 @@
         "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\"",
         "check-types": "tsc --noEmit",
         "validate": "npm run lint && npm run format && npm run check-types",
-        "test": "playwright test",
+        "generate-config": "npx ts-node scripts/generateProjectConfig.ts",
+        "test": "npm run generate-config && playwright test",
+        "test:e2e": "npm run generate-config && ENABLE_E2E_TESTS=true ENABLE_UI_TESTS=false playwright test",
+        "test:ui": "ENABLE_E2E_TESTS=false ENABLE_UI_TESTS=true playwright test",
+        "test:all": "npm run generate-config && ENABLE_E2E_TESTS=true ENABLE_UI_TESTS=true playwright test",
         "test:report": "playwright show-report",
-        "test:tssc": "playwright test tests/tssc/full_workflow.test.ts",
-        "test:ui": "UI_TEST=true playwright test tests/tssc/ui.test.ts",
-        "ui": "UI_TEST=true playwright test --ui tests/tssc/ui.test.ts"
+        "test:tssc": "npm run generate-config && playwright test tests/tssc/full_workflow.test.ts",
+        "ui": "npm run generate-config && ENABLE_E2E_TESTS=true ENABLE_UI_TESTS=true playwright test --ui"
     },
     "keywords": [
         "typescript",

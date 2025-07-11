@@ -1,6 +1,5 @@
 // Import default logger as fallback
 import { closeAllLoggers, defaultLogger } from './src/log/logger';
-import { resetTestItemsFile } from './src/utils/testItemExporter';
 import { FullConfig } from '@playwright/test';
 import { Logger } from 'pino';
 
@@ -10,13 +9,6 @@ async function globalSetup(config: FullConfig) {
   log.info('Starting test suite setup (Global Setup)');
 
   try {
-    // Skip reset when running UI tests
-    const isUITest = process.env.UI_TEST === 'true';
-
-    if (!isUITest) {
-      resetTestItemsFile();
-    }
-
     log.info('Global setup completed successfully.');
   } catch (error) {
     log.error({ err: error }, 'Global setup failed!'); // Use err serializer
