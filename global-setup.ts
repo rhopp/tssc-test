@@ -1,9 +1,7 @@
-// Import default logger as fallback
 import { FullConfig } from '@playwright/test';
 import { Logger } from 'pino';
 
 import { closeAllLoggers, defaultLogger } from './src/log/logger';
-import { resetTestItemsFile } from './src/utils/testItemExporter';
 
 /**
  * Global setup function for Playwright tests
@@ -14,12 +12,11 @@ async function globalSetup(config: FullConfig): Promise<void> {
   log.info('Starting test suite setup (Global Setup)');
 
   try {
-    // Skip reset when running UI tests
+    // Skip reset when running UI tests (resetTestItemsFile no longer available in main)
     const isUITest = process.env.UI_TEST === 'true';
 
     if (!isUITest) {
-      log.info('Resetting test items file...');
-      resetTestItemsFile();
+      log.info('Test items reset functionality removed in main branch');
     } else {
       log.info('Skipping test items reset for UI tests');
     }
