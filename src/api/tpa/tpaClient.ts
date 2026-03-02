@@ -124,7 +124,7 @@ export class TPAClient {
 
       this.token = response.data.access_token;
     } catch (error) {
-      const message = 'Error getting TPA token';
+      const message = 'Kaboom! Error getting TPA token';
       this.logger.error(`${message}: ${error}`);
       throw new TPAError(message, error instanceof Error ? error : new Error(String(error)));
     }

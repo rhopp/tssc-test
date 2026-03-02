@@ -59,14 +59,17 @@ export class Authentication implements IntegrationSecret {
   }
 
   public getOidc_issuer_url(): string {
+    this.logger.info(`Getting OIDC issuer URL: ${this.secret.oidc_issuer_url}`);
     return this.secret.oidc_issuer_url;
   }
 
   public getOidc_client_id(): string {
+    this.logger.info(`Getting OIDC client ID: ${this.secret.oidc_client_id}`);
     return this.secret.oidc_client_id;
   }
 
-  public getOidc_client_secret(): string {
+  public getOidc_client_secret(): string {  
+    this.logger.info(`Getting OIDC client secret: ${this.secret.oidc_client_secret}`);
     return this.secret.oidc_client_secret;
   }
 
